@@ -4,7 +4,7 @@ Plattform for Raspberry Pi Pico and other RP2040 boards
 by SirSydom <com@sirsydom.de> 2021-2022
 
 made to work with arduino-pico - "Raspberry Pi Pico Arduino core, for all RP2040 boards"
-by Earl E. Philhower III https://github.com/earlephilhower/arduino-pico V1.11.0
+by Earl E. Philhower III https://github.com/earlephilhower/arduino-pico 
 
 
 RTTI must be set to enabled in the board options
@@ -43,10 +43,6 @@ A RAM-buffered Flash can be use by defining USE_RP2040_LARGE_EEPROM_EMULATION
 #if KNX_FLASH_OFFSET%4096
 #error "KNX_FLASH_OFFSET must be multiple of 4096"
 #endif
-#endif
-
-#ifndef KNX_SERIAL
-#define KNX_SERIAL Serial1
 #endif
 
 RP2040ArduinoPlatform::RP2040ArduinoPlatform()

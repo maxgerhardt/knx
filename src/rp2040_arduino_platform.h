@@ -1,3 +1,5 @@
+#pragma once
+
 #include "arduino_platform.h"
 
 #include "Arduino.h"
@@ -13,6 +15,10 @@
 
 #ifdef USE_RP2040_LARGE_EEPROM_EMULATION
 #define USE_RP2040_EEPROM_EMULATION
+#endif
+
+#ifndef KNX_SERIAL
+#define KNX_SERIAL Serial1
 #endif
 
 

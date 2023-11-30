@@ -52,15 +52,27 @@ RP2040IpArduinoPlatform::RP2040IpArduinoPlatform( HardwareSerial* s) : RP2040Ard
 
 uint32_t RP2040IpArduinoPlatform::currentIpAddress()
 {
+#ifdef KNX_NETIF
     return KNX_NETIF.localIP();
+#else
+    return 0;
+#endif
 }
 uint32_t RP2040IpArduinoPlatform::currentSubnetMask()
 {
+#ifdef KNX_NETIF
     return KNX_NETIF.subnetMask();
+#else
+    return 0;
+#endif
 }
 uint32_t RP2040IpArduinoPlatform::currentDefaultGateway()
 {
+#ifdef KNX_NETIF
     return KNX_NETIF.gatewayIP();
+#else
+    return 0;
+#endif
 }
 void RP2040IpArduinoPlatform::macAddress(uint8_t* addr)
 {
@@ -78,6 +90,7 @@ void RP2040IpArduinoPlatform::setupMultiCast(uint32_t addr, uint16_t port)
     mcastaddr = IPAddress(htonl(addr));
     _port = port;
     uint8_t result = _udp.beginMulticast(mcastaddr, port);
+    (void) result;
 
 #ifdef KNX_LOG_IP
     print("Setup Mcast addr: ");

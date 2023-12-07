@@ -18,7 +18,24 @@
 #endif
 
 #ifndef KNX_SERIAL
+#pragma warn "KNX_SERIAL not defined, using Serial1"
 #define KNX_SERIAL Serial1
+#endif
+
+#ifdef KNX_IP_W5500
+#if ARDUINO_PICO_MAJOR * 10000 + ARDUINO_PICO_MINOR * 100 + ARDUINO_PICO_REVISION < 30600
+#pragma error "arduino-pico >= 3.6.0 needed"
+#endif
+#define KNX_NETIF Eth
+
+#include "SPI.h"
+#include <W5500lwIP.h>
+
+#elif defined(KNX_IP_WIFI)
+
+#define KNX_NETIF WiFi
+#include <WiFi.h>
+
 #endif
 
 
@@ -60,6 +77,27 @@ public:
     
     // writes _eraseblockBuffer to flash - overrides Plattform::writeBufferedEraseBlock() for performance optimization only
     void writeBufferedEraseBlock();
+    #endif
+
+    #if defined(KNX_IP_W5500) || defined(KNX_IP_WIFI) 
+    uint32_t currentIpAddress() override;
+    uint32_t currentSubnetMask() override;
+    uint32_t currentDefaultGateway() override;
+    void macAddress(uint8_t* addr) override;
+
+    // multicast
+    void setupMultiCast(uint32_t addr, uint16_t port) override;
+    void closeMultiCast() override;
+    bool sendBytesMultiCast(uint8_t* buffer, uint16_t len) override;
+    int readBytesMultiCast(uint8_t* buffer, uint16_t maxLen) override;
+
+    // unicast
+    bool sendBytesUniCast(uint32_t addr, uint16_t port, uint8_t* buffer, uint16_t len) override;
+
+    protected: WiFiUDP _udp;
+    protected: IPAddress mcastaddr;
+    protected: uint16_t _port;
+    protected: uint8_t _macaddr[6];
     #endif
 };
 

@@ -45,6 +45,11 @@ A RAM-buffered Flash can be use by defining USE_RP2040_LARGE_EEPROM_EMULATION
 #endif
 #endif
 
+#ifdef KNX_IP_W5500
+extern Wiznet5500lwIP KNX_NETIF;
+#elif defined(KNX_IP_WIFI)
+#endif
+
 RP2040ArduinoPlatform::RP2040ArduinoPlatform()
 #ifndef KNX_NO_DEFAULT_UART
     : ArduinoPlatform(&KNX_SERIAL)
@@ -230,6 +235,113 @@ void RP2040ArduinoPlatform::writeBufferedEraseBlock()
     }
 }
 #endif
+
+#if defined(KNX_IP_W5500) || defined(KNX_IP_WIFI)
+uint32_t RP2040ArduinoPlatform::currentIpAddress()
+{
+
+    return KNX_NETIF.localIP();
+}
+uint32_t RP2040ArduinoPlatform::currentSubnetMask()
+{
+    return KNX_NETIF.subnetMask();
+}
+uint32_t RP2040ArduinoPlatform::currentDefaultGateway()
+{
+    return KNX_NETIF.gatewayIP();
+}
+void RP2040ArduinoPlatform::macAddress(uint8_t* addr)
+{
+#if defined(KNX_IP_W5500)
+    addr = KNX_NETIF.getNetIf()->hwaddr;
+#elif defined(KNX_IP_WIFI)
+    addr = KNX_NETIF.macAddress(_macaddr);
+#endif
+}
+
+// multicast
+void RP2040ArduinoPlatform::setupMultiCast(uint32_t addr, uint16_t port)
+{
+    mcastaddr = IPAddress(htonl(addr));
+    _port = port;
+    uint8_t result = _udp.beginMulticast(mcastaddr, port);
+    (void) result;
+
+#ifdef KNX_LOG_IP
+    print("Setup Mcast addr: ");
+    print(mcastaddr.toString().c_str());
+    print(" on port: ");
+    print(port);
+    print(" result ");
+    println(result);
+#endif
+}
+
+void RP2040ArduinoPlatform::closeMultiCast()
+{
+    _udp.stop();
+}
+
+bool RP2040ArduinoPlatform::sendBytesMultiCast(uint8_t* buffer, uint16_t len)
+{
+#ifdef KNX_LOG_IP
+    printHex("<- ",buffer, len);
+#endif
+    //ToDo: check if Ethernet is able to receive
+    _udp.beginPacket(mcastaddr, _port);
+    _udp.write(buffer, len);
+    _udp.endPacket();
+    return true;
+}
+
+int RP2040ArduinoPlatform::readBytesMultiCast(uint8_t* buffer, uint16_t maxLen)
+{
+    int len = _udp.parsePacket();
+    if (len == 0)
+        return 0;
+
+    if (len > maxLen)
+    {
+        print("udp buffer to small. was ");
+        print(maxLen);
+        print(", needed ");
+        println(len);
+        fatalError();
+    }
+
+    _udp.read(buffer, len);
+#ifdef KNX_LOG_IP
+    print("Remote IP: ");
+    print(_udp.remoteIP().toString().c_str());
+
+    printHex("-> ", buffer, len);
+#endif
+    return len;
+}
+
+// unicast
+bool RP2040ArduinoPlatform::sendBytesUniCast(uint32_t addr, uint16_t port, uint8_t* buffer, uint16_t len)
+{
+    IPAddress ucastaddr(htonl(addr));
+    
+#ifdef KNX_LOG_IP
+    print("sendBytesUniCast to:");
+    println(ucastaddr.toString().c_str());
+#endif
+
+    if (_udp.beginPacket(ucastaddr, port) == 1)
+    {
+        _udp.write(buffer, len);
+        if (_udp.endPacket() == 0)
+            println("sendBytesUniCast endPacket fail");
+    }
+    else
+        println("sendBytesUniCast beginPacket fail");
+
+    return true;
+}
+#endif
+
 #endif
 
 

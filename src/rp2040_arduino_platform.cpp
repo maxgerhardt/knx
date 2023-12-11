@@ -276,8 +276,8 @@ void RP2040ArduinoPlatform::setupMultiCast(uint32_t addr, uint16_t port)
     (void) result;
 
     #ifdef KNX_IP_GENERIC
-    if(!_unicast_socket_setup)
-        _unicast_socket_setup = UDP_UNICAST.begin(3671);
+    //if(!_unicast_socket_setup)
+    //    _unicast_socket_setup = UDP_UNICAST.begin(3671);
     #endif
 
 #ifdef KNX_LOG_IP

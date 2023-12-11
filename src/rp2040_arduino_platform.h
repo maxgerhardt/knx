@@ -22,21 +22,47 @@
 #define KNX_SERIAL Serial1
 #endif
 
-// #ifdef KNX_IP_W5500
-// #if ARDUINO_PICO_MAJOR * 10000 + ARDUINO_PICO_MINOR * 100 + ARDUINO_PICO_REVISION < 30600
-// #pragma error "arduino-pico >= 3.6.0 needed"
-// #endif
-// #define KNX_NETIF Eth
+#ifdef KNX_IP_W5500
+#if ARDUINO_PICO_MAJOR * 10000 + ARDUINO_PICO_MINOR * 100 + ARDUINO_PICO_REVISION < 30600
+#pragma error "arduino-pico >= 3.6.0 needed"
+#endif
+#define KNX_NETIF Eth
 
-// #include "SPI.h"
-// #include <W5500lwIP.h>
+#include "SPI.h"
+#include <W5500lwIP.h>
 
-// #elif defined(KNX_IP_WIFI)
+#elif defined(KNX_IP_WIFI)
 
-// #define KNX_NETIF WiFi
-// #include <WiFi.h>
+#define KNX_NETIF WiFi
+#include <WiFi.h>
 
-// #endif
+#elif defined(KNX_IP_GENERIC)
+
+
+#include <SPI.h>
+
+#ifndef DEBUG_ETHERNET_GENERIC_PORT
+#define DEBUG_ETHERNET_GENERIC_PORT         Serial
+#endif
+
+#ifndef _ETG_LOGLEVEL_
+#define _ETG_LOGLEVEL_                      1
+#endif
+
+// set to true if you want to use SPI1, otherwise SPI is used.
+//#define ETHERNET_GENERIC_USING_SPI2                          false
+
+#define ETHERNET_USE_RPIPICO      true
+#define ETHERNET_LARGE_BUFFERS
+#include <Ethernet_Generic.hpp>
+#include <EthernetClient.h>             // https://github.com/khoih-prog/Ethernet_Generic
+#include <EthernetServer.h>             // https://github.com/khoih-prog/Ethernet_Generic
+#include <EthernetUdp.h>
+
+
+#define KNX_NETIF Ethernet
+
+#endif
 
 
 class RP2040ArduinoPlatform : public ArduinoPlatform
@@ -95,10 +121,17 @@ public:
     // unicast
     bool sendBytesUniCast(uint32_t addr, uint16_t port, uint8_t* buffer, uint16_t len) override;
 
-    // protected: WiFiUDP _udp;
+    #if defined(KNX_IP_W5500) || defined(KNX_IP_WIFI)
+    #define UDP_UNICAST _udp
+    protected: WiFiUDP _udp;
+    #elif defined(KNX_IP_GENERIC)
+    #define UDP_UNICAST _udp_uni
+    protected: bool _unicast_socket_setup = false;
+    protected: EthernetUDP _udp;
+    protected: EthernetUDP UDP_UNICAST;
+    #endif
     protected: IPAddress mcastaddr;
     protected: uint16_t _port;
-    protected: uint8_t _macaddr[6];
     #endif
 };
 

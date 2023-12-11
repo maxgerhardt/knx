@@ -17,6 +17,10 @@ EEPROM Emulation from arduino-pico core (max 4k) can be use by defining USE_RP20
 
 A RAM-buffered Flash can be use by defining USE_RP2040_LARGE_EEPROM_EMULATION
 
+For usage of KNX-IP you have to define either
+- KNX_IP_W5500 (use the arduino-pico core's w5500 lwip stack)
+- KNX_IP_WIFI (use the arduino-pico core's PiPicoW lwip stack)
+- KNX_IP_GENERIC (use the Ethernet_Generic stack)
 
 ----------------------------------------------------*/
 
@@ -45,10 +49,12 @@ A RAM-buffered Flash can be use by defining USE_RP2040_LARGE_EEPROM_EMULATION
 #endif
 #endif
 
-// #ifdef KNX_IP_W5500
-// extern Wiznet5500lwIP KNX_NETIF;
-// #elif defined(KNX_IP_WIFI)
-// #endif
+#ifdef KNX_IP_W5500
+extern Wiznet5500lwIP KNX_NETIF;
+#elif defined(KNX_IP_WIFI)
+#elif defined(KNX_IP_GENERIC)
+
+#endif
 
 RP2040ArduinoPlatform::RP2040ArduinoPlatform()
 #ifndef KNX_NO_DEFAULT_UART
@@ -256,6 +262,8 @@ void RP2040ArduinoPlatform::macAddress(uint8_t* addr)
     addr = KNX_NETIF.getNetIf()->hwaddr;
 #elif defined(KNX_IP_WIFI)
     addr = KNX_NETIF.macAddress(_macaddr);
+#elif defined(KNX_IP_GENERIC)
+    KNX_NETIF.MACAddress(addr);
 #endif
 }
 
@@ -266,6 +274,11 @@ void RP2040ArduinoPlatform::setupMultiCast(uint32_t addr, uint16_t port)
     _port = port;
     uint8_t result = _udp.beginMulticast(mcastaddr, port);
     (void) result;
+
+    #ifdef KNX_IP_GENERIC
+    if(!_unicast_socket_setup)
+        _unicast_socket_setup = UDP_UNICAST.begin(3671);
+    #endif
 
 #ifdef KNX_LOG_IP
     print("Setup Mcast addr: ");
@@ -329,10 +342,15 @@ bool RP2040ArduinoPlatform::sendBytesUniCast(uint32_t addr, uint16_t port, uint8
     println(ucastaddr.toString().c_str());
 #endif
 
-    if (_udp.beginPacket(ucastaddr, port) == 1)
+#ifdef KNX_IP_GENERIC
+    if(!_unicast_socket_setup)
+        _unicast_socket_setup = UDP_UNICAST.begin(3671);
+#endif
+
+    if (UDP_UNICAST.beginPacket(ucastaddr, port) == 1)
     {
-        _udp.write(buffer, len);
-        if (_udp.endPacket() == 0)
+        UDP_UNICAST.write(buffer, len);
+        if (UDP_UNICAST.endPacket() == 0)
             println("sendBytesUniCast endPacket fail");
     }
     else

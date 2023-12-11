@@ -45,10 +45,10 @@ A RAM-buffered Flash can be use by defining USE_RP2040_LARGE_EEPROM_EMULATION
 #endif
 #endif
 
-#ifdef KNX_IP_W5500
-extern Wiznet5500lwIP KNX_NETIF;
-#elif defined(KNX_IP_WIFI)
-#endif
+// #ifdef KNX_IP_W5500
+// extern Wiznet5500lwIP KNX_NETIF;
+// #elif defined(KNX_IP_WIFI)
+// #endif
 
 RP2040ArduinoPlatform::RP2040ArduinoPlatform()
 #ifndef KNX_NO_DEFAULT_UART
@@ -236,7 +236,7 @@ void RP2040ArduinoPlatform::writeBufferedEraseBlock()
 }
 #endif
 
-#if defined(KNX_IP_W5500) || defined(KNX_IP_WIFI)
+#if defined(KNX_NETIF)
 uint32_t RP2040ArduinoPlatform::currentIpAddress()
 {
 

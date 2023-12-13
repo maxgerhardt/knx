@@ -55,7 +55,9 @@ class CemiServer
     DataLinkLayer* _dataLinkLayerPrimary = nullptr;
 #endif
     BauSystemB& _bau;
-    //UsbTunnelInterface _usbTunnelInterface;
+#ifdef USE_USB
+    UsbTunnelInterface _usbTunnelInterface;
+#endif
 };
 
 #endif

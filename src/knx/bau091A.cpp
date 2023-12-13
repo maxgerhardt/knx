@@ -37,7 +37,9 @@ Bau091A::Bau091A(Platform& platform)
 #ifdef USE_CEMI_SERVER
     _cemiServerObject.setMediumTypeAsSupported(DptMedium::KNX_IP);
     _cemiServerObject.setMediumTypeAsSupported(DptMedium::KNX_TP1);
+    _cemiServer.dataLinkLayerPrimary(_dlLayerPrimary);
     _cemiServer.dataLinkLayer(_dlLayerSecondary); // Secondary I/F is the important one!
+    _dlLayerPrimary.cemiServer(_cemiServer);
     _dlLayerSecondary.cemiServer(_cemiServer);
     _memory.addSaveRestore(&_cemiServerObject);
 #endif
@@ -192,6 +194,22 @@ TPAckType Bau091A::isAckRequired(uint16_t address, bool isGrpAddr)
                 ack = TPAckType::AckReqAck;
             else
                 ack = TPAckType::AckReqNone;
+
+#ifdef KNX_TUNNELING
+        const uint8_t *addresses = _ipParameters.propertyData(PID_ADDITIONAL_INDIVIDUAL_ADDRESSES);
+        for(int i = 0; i < KNX_TUNNELING; i++)
+        {
+            uint16_t pa = 0;
+            popWord(pa, addresses + (i*2));
+
+            if(address == pa)
+            {
+                ack = TPAckType::AckReqAck;
+                break;
+            }
+        }
+#endif
+
     }
 
     return ack;

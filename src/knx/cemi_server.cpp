@@ -11,10 +11,12 @@
 #include <stdio.h>
 
 CemiServer::CemiServer(BauSystemB& bau)
-    : _bau(bau),
-      _usbTunnelInterface(*this,
+    : _bau(bau)
+#ifdef USE_USB
+        _usbTunnelInterface(*this,
         _bau.deviceObject().maskVersion(),
         _bau.deviceObject().manufacturerId())
+#endif
 {
     // The cEMI server will hand out the device address + 1 to the cEMI client (e.g. ETS),
     // so that the device and the cEMI client/server connection(tunnel) can operate simultaneously.
@@ -26,6 +28,13 @@ void CemiServer::dataLinkLayer(DataLinkLayer& layer)
     _dataLinkLayer = &layer;
 }
 
+#ifdef KNX_TUNNELING
+void CemiServer::dataLinkLayerPrimary(DataLinkLayer& layer)
+{
+    _dataLinkLayerPrimary = &layer;
+}
+
+#endif
 uint16_t CemiServer::clientAddress() const
 {
     return _clientAddress;
@@ -42,23 +51,34 @@ void CemiServer::dataConfirmationToTunnel(CemiFrame& frame)
 
     frame.messageCode(L_data_con);
 
+#ifdef KNX_LOG_TUNNELING
     print("L_data_con: src: ");
     print(frame.sourceAddress(), HEX);
     print(" dst: ");
     print(frame.destinationAddress(), HEX);
 
     printHex(" frame: ", frame.data(), frame.dataLength());
+#endif
 
+#ifdef USE_USB
     _usbTunnelInterface.sendCemiFrame(frame);
+#elif defined(KNX_TUNNELING)
+    _dataLinkLayerPrimary->dataConfirmationToTunnel(frame);
+#endif
 
     frame.messageCode(backupMsgCode);
 }
 
 void CemiServer::dataIndicationToTunnel(CemiFrame& frame)
 {
+#ifdef USE_RF
     bool isRf = _dataLinkLayer->mediumType() == DptMedium::KNX_RF;
     uint8_t data[frame.dataLength() + (isRf ? 10 : 0)];
+#else
+    uint8_t data[frame.dataLength()];
+#endif
 
+#ifdef USE_RF
     if (isRf)
     {
         data[0] = L_data_ind;     // Message Code
@@ -72,25 +92,37 @@ void CemiServer::dataIndicationToTunnel(CemiFrame& frame)
     }
     else
     {
+#endif
         memcpy(&data[0], frame.data(), frame.dataLength());
+#ifdef USE_RF
     }
+#endif
 
     CemiFrame tmpFrame(data, sizeof(data));
 
+#ifdef KNX_LOG_TUNNELING
+    print("ToTunnel ");
     print("L_data_ind: src: ");
     print(tmpFrame.sourceAddress(), HEX);
     print(" dst: ");
     print(tmpFrame.destinationAddress(), HEX);
 
     printHex(" frame: ", tmpFrame.data(), tmpFrame.dataLength());
+#endif
     tmpFrame.apdu().type();
 
+#ifdef USE_USB
     _usbTunnelInterface.sendCemiFrame(tmpFrame);
+#elif defined(KNX_TUNNELING)
+    _dataLinkLayerPrimary->dataIndicationToTunnel(frame);
+#endif
 }
 
 void CemiServer::frameReceived(CemiFrame& frame)
 {
+#ifdef USE_RF
     bool isRf = _dataLinkLayer->mediumType() == DptMedium::KNX_RF;
+#endif
 
     switch(frame.messageCode())
     {
@@ -98,11 +130,15 @@ void CemiServer::frameReceived(CemiFrame& frame)
         {
             // Fill in the cEMI client address if the client sets 
             // source address to 0.
+#ifndef KNX_TUNNELING
+            //We already set the correct IA
             if(frame.sourceAddress() == 0x0000)
             {
                 frame.sourceAddress(_clientAddress);
             }
+#endif
 
+#ifdef USE_RF
             if (isRf)
             {
                 // Check if we have additional info for RF
@@ -133,21 +169,24 @@ void CemiServer::frameReceived(CemiFrame& frame)
                     _frameNumber = (_frameNumber + 1) & 0x7;
                 }
             }
+#endif
 
+#ifdef KNX_LOG_TUNNELING
             print("L_data_req: src: ");
             print(frame.sourceAddress(), HEX);
             print(" dst: ");
             print(frame.destinationAddress(), HEX);
-
             printHex(" frame: ", frame.data(), frame.dataLength());
-
+#endif
             _dataLinkLayer->dataRequestFromTunnel(frame);
             break;
         }
 
         case M_PropRead_req:
         {
+#ifdef KNX_LOG_TUNNELING
             print("M_PropRead_req: ");
+#endif
             
             uint16_t objectType;
             popWord(objectType, &frame.data()[1]);
@@ -158,6 +197,7 @@ void CemiServer::frameReceived(CemiFrame& frame)
             uint8_t* data = nullptr;
             uint32_t dataSize = 0;
 
+#ifdef KNX_LOG_TUNNELING
             print("ObjType: ");
             print(objectType, DEC);
             print(" ObjInst: ");
@@ -168,6 +208,7 @@ void CemiServer::frameReceived(CemiFrame& frame)
             print(numberOfElements, DEC);
             print(" startIdx: ");
             print(startIndex, DEC);
+#endif
 
             // propertyValueRead() allocates memory for the data! Needs to be deleted again!
             _bau.propertyValueRead((ObjectType)objectType, objectInstance, propertyId, numberOfElements, startIndex, &data, dataSize);
@@ -192,18 +233,22 @@ void CemiServer::frameReceived(CemiFrame& frame)
 
             if (data && dataSize && numberOfElements)
             {
+#ifdef KNX_LOG_TUNNELING
                 printHex(" <- data: ", data, dataSize);
-                println("");
+#endif
 
                 // Prepare positive response
                 uint8_t responseData[7 + dataSize];
                 memcpy(responseData, frame.data(), 7);
                 memcpy(&responseData[7], data, dataSize); 
-                
+
                 CemiFrame responseFrame(responseData, sizeof(responseData));
                 responseFrame.messageCode(M_PropRead_con);
+#ifdef USE_USB
                 _usbTunnelInterface.sendCemiFrame(responseFrame);
-
+#elif defined(KNX_TUNNELING)
+                _dataLinkLayerPrimary->dataRequestToTunnel(responseFrame);
+#endif
                 delete[] data;
             }
             else
@@ -219,7 +264,11 @@ void CemiServer::frameReceived(CemiFrame& frame)
 
                 CemiFrame responseFrame(responseData, sizeof(responseData));
                 responseFrame.messageCode(M_PropRead_con);
+#ifdef USE_USB
                 _usbTunnelInterface.sendCemiFrame(responseFrame);
+#elif defined(KNX_TUNNELING)
+            _dataLinkLayerPrimary->dataRequestToTunnel(responseFrame);
+#endif
             }
             break;
         }
@@ -286,7 +335,11 @@ void CemiServer::frameReceived(CemiFrame& frame)
 
                 CemiFrame responseFrame(responseData, sizeof(responseData));
                 responseFrame.messageCode(M_PropWrite_con);
+#ifdef USE_USB
                 _usbTunnelInterface.sendCemiFrame(responseFrame);
+#elif defined(KNX_TUNNELING)
+            _dataLinkLayerPrimary->dataRequestToTunnel(responseFrame);
+#endif
             }
             else
             {
@@ -301,7 +354,11 @@ void CemiServer::frameReceived(CemiFrame& frame)
 
                 CemiFrame responseFrame(responseData, sizeof(responseData));
                 responseFrame.messageCode(M_PropWrite_con);
+#ifdef USE_USB
                 _usbTunnelInterface.sendCemiFrame(responseFrame);
+#elif defined(KNX_TUNNELING)
+            _dataLinkLayerPrimary->dataRequestToTunnel(responseFrame);
+#endif
             }
             break;
         }
@@ -329,7 +386,11 @@ void CemiServer::frameReceived(CemiFrame& frame)
             uint8_t responseData[1];
             CemiFrame responseFrame(responseData, sizeof(responseData));
             responseFrame.messageCode(M_Reset_ind);
+#ifdef USE_USB
             _usbTunnelInterface.sendCemiFrame(responseFrame);
+#elif defined(KNX_TUNNELING)
+            _dataLinkLayerPrimary->dataRequestToTunnel(responseFrame);
+#endif
             break;
         }
 
@@ -349,7 +410,9 @@ void CemiServer::frameReceived(CemiFrame& frame)
 
 void CemiServer::loop()
 {
+#ifdef USE_USB
     _usbTunnelInterface.loop();
+#endif
 }
 
 #endif

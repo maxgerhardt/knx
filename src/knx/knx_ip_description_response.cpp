@@ -1,4 +1,4 @@
-#include "knx_ip_search_response.h"
+#include "knx_ip_description_response.h"
 #ifdef USE_IP
 
 #define LEN_SERVICE_FAMILIES 2
@@ -16,17 +16,12 @@
 #endif
 #endif
 
-KnxIpSearchResponse::KnxIpSearchResponse(IpParameterObject& parameters, DeviceObject& deviceObject)
-    : KnxIpFrame(LEN_KNXIP_HEADER + LEN_IPHPAI + LEN_DEVICE_INFORMATION_DIB + LEN_SERVICE_DIB),
-      _controlEndpoint(_data + LEN_KNXIP_HEADER), _deviceInfo(_data + LEN_KNXIP_HEADER + LEN_IPHPAI),
-      _supportedServices(_data + LEN_KNXIP_HEADER + LEN_IPHPAI + LEN_DEVICE_INFORMATION_DIB)
+KnxIpDescriptionResponse::KnxIpDescriptionResponse(IpParameterObject& parameters, DeviceObject& deviceObject)
+    : KnxIpFrame(LEN_KNXIP_HEADER + LEN_DEVICE_INFORMATION_DIB + LEN_SERVICE_DIB),
+      _deviceInfo(_data + LEN_KNXIP_HEADER),
+      _supportedServices(_data + LEN_KNXIP_HEADER + LEN_DEVICE_INFORMATION_DIB)
 {
-    serviceTypeIdentifier(SearchResponse);
-
-    _controlEndpoint.length(LEN_IPHPAI);
-    _controlEndpoint.code(IPV4_UDP);
-    _controlEndpoint.ipAddress(parameters.propertyValue<uint32_t>(PID_CURRENT_IP_ADDRESS));
-    _controlEndpoint.ipPortNumber(KNXIP_MULTICAST_PORT);
+    serviceTypeIdentifier(DescriptionResponse);
 
     _deviceInfo.length(LEN_DEVICE_INFORMATION_DIB);
     _deviceInfo.code(DEVICE_INFO);
@@ -60,20 +55,13 @@ KnxIpSearchResponse::KnxIpSearchResponse(IpParameterObject& parameters, DeviceOb
 #endif
 }
 
-
-IpHostProtocolAddressInformation& KnxIpSearchResponse::controlEndpoint()
-{
-    return _controlEndpoint;
-}
-
-
-KnxIpDeviceInformationDIB& KnxIpSearchResponse::deviceInfo()
+KnxIpDeviceInformationDIB& KnxIpDescriptionResponse::deviceInfo()
 {
     return _deviceInfo;
 }
 
 
-KnxIpSupportedServiceDIB& KnxIpSearchResponse::supportedServices()
+KnxIpSupportedServiceDIB& KnxIpDescriptionResponse::supportedServices()
 {
     return _supportedServices;
 }

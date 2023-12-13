@@ -20,6 +20,11 @@ class DataLinkLayer
     // from tunnel
     void cemiServer(CemiServer& cemiServer);
     void dataRequestFromTunnel(CemiFrame& frame);
+#ifdef KNX_TUNNELING
+    virtual void dataRequestToTunnel(CemiFrame& frame);
+    virtual void dataConfirmationToTunnel(CemiFrame& frame);
+    virtual void dataIndicationToTunnel(CemiFrame& frame);
+#endif
 #endif
 
     // from network layer

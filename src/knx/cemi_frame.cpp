@@ -128,6 +128,9 @@ void CemiFrame::messageCode(MessageCode msgCode)
 
 uint16_t CemiFrame::totalLenght() const
 {
+    if(messageCode() != L_data_con && messageCode() != L_data_ind && messageCode() != L_data_req)
+        return _length; // we dont have an npu on any other messagecode
+
     uint16_t tmp = 
     _npdu.length() + NPDU_LPDU_DIFF;
     return tmp;

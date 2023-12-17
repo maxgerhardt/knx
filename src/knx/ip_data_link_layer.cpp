@@ -9,6 +9,7 @@
 #include "knx_ip_routing_indication.h"
 #include "knx_ip_search_request.h"
 #include "knx_ip_search_response.h"
+#include "knx_facade.h"
 #ifdef KNX_TUNNELING
 #include "knx_ip_connect_request.h"
 #include "knx_ip_connect_response.h"
@@ -43,6 +44,9 @@ bool IpDataLinkLayer::sendFrame(CemiFrame& frame)
     if(isSendLimitReached())
         return false;
     bool success = sendBytes(packet.data(), packet.totalLength());
+#ifdef KNX_ACTIVITYCALLBACK
+        knx.Activity((_netIndex << KNX_ACTIVITYCALLBACK_NET) | (KNX_ACTIVITYCALLBACK_DIR_SEND << KNX_ACTIVITYCALLBACK_DIR));
+#endif
     dataConReceived(frame, success);
     return success;
 }
@@ -256,6 +260,10 @@ void IpDataLinkLayer::loop()
         || buffer[1] != KNXIP_PROTOCOL_VERSION)
         return;
 
+#ifdef KNX_ACTIVITYCALLBACK
+    knx.Activity((_netIndex << KNX_ACTIVITYCALLBACK_NET) | (KNX_ACTIVITYCALLBACK_DIR_RECV << KNX_ACTIVITYCALLBACK_DIR));
+#endif
+
     uint16_t code;
     popWord(code, buffer + 2);
     switch ((KnxIpServiceType)code)
@@ -273,6 +281,9 @@ void IpDataLinkLayer::loop()
             KnxIpSearchResponse searchResponse(_ipParameters, _deviceObject);
 
             auto hpai = searchRequest.hpai();
+#ifdef KNX_ACTIVITYCALLBACK
+            knx.Activity((_netIndex << KNX_ACTIVITYCALLBACK_NET) | (KNX_ACTIVITYCALLBACK_DIR_SEND << KNX_ACTIVITYCALLBACK_DIR) | (KNX_ACTIVITYCALLBACK_IPUNICAST));
+#endif
             _platform.sendBytesUniCast(hpai.ipAddress(), hpai.ipPortNumber(), searchResponse.data(), searchResponse.totalLength());
             break;
         }
@@ -400,7 +411,7 @@ void IpDataLinkLayer::loop()
 
             if(tun == nullptr)
             {
-                println("Kein freier Tunnel verfügbar");
+                println("Kein freier Tunnel verfï¿½gbar");
                 KnxIpConnectResponse connRes(0x00, E_NO_MORE_CONNECTIONS);
                 _platform.sendBytesUniCast(connRequest.hpaiCtrl().ipAddress(), connRequest.hpaiCtrl().ipPortNumber(), connRes.data(), connRes.totalLength());
                 return;

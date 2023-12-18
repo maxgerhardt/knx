@@ -309,10 +309,15 @@ void NetworkLayerCoupler::sendMsgHopCount(AckType ack, AddressType addrType, uin
 // TODO: we could also do the sanity checks here, i.e. check if sourceAddress is really coming in from correct srcIfIdx, etc. (see PID_COUPL_SERV_CONTROL: EN_SNA_INCONSISTENCY_CHECK)
 void NetworkLayerCoupler::routeDataIndividual(AckType ack, uint16_t destination, NPDU& npdu, Priority priority, uint16_t source, uint8_t srcIfIndex)
 {
-    //println("NetworkLayerCoupler::routeDataIndividual");
+    //print("NetworkLayerCoupler::routeDataIndividual dest 0x");
+    //print(destination, HEX);
+    //print(" own addr 0x");
+    //println(_deviceObj.individualAddress(), HEX);
+
     if(destination == _deviceObj.individualAddress())
     {
         // FORWARD_LOCALLY
+        //println("NetworkLayerCoupler::routeDataIndividual locally");
         HopCountType hopType = npdu.hopCount() == 7 ? UnlimitedRouting : NetworkLayerParameter;
         _transportLayer.dataIndividualIndication(destination, hopType, priority, source, npdu.tpdu());
         return;
@@ -321,11 +326,29 @@ void NetworkLayerCoupler::routeDataIndividual(AckType ack, uint16_t destination,
     // Local to main or sub line
     if (srcIfIndex == kLocalIfIndex)
     {
-        uint16_t ownAA = _deviceObj.individualAddress() & 0xF000;  // Own area address
-        uint16_t Z = destination & 0xF000;                         // destination area address
+        uint16_t netaddr;
+        uint16_t Z;
+        if(_couplerType == CouplerType::BackboneCoupler)
+        {
+            netaddr = _deviceObj.individualAddress() & 0xF000;
+            Z = destination & 0xF000;
+        }
+        else if(_couplerType == CouplerType::LineCoupler)
+        {
+            netaddr = _deviceObj.individualAddress() & 0xFF00;
+            Z = destination & 0xFF00;
+        }
+        else
+        {
+            //unknown coupler type, should not happen
+            return ;
+        }
+        
 
-        // if destination is not within our area then send via primary interface, else via secondary interface
-        uint8_t destIfidx = (Z != ownAA) ? kPrimaryIfIndex : kSecondaryIfIndex;
+        // if destination is not within our scope then send via primary interface, else via secondary interface
+        uint8_t destIfidx = (Z != netaddr) ? kPrimaryIfIndex : kSecondaryIfIndex;
+        //print("NetworkLayerCoupler::routeDataIndividual local to s or p: ");
+        //println(destIfidx);
         _netLayerEntities[destIfidx].sendDataRequest(npdu, ack, destination, source, priority, AddressType::IndividualAddress, Broadcast);
         return;
     }
@@ -342,22 +365,28 @@ void NetworkLayerCoupler::routeDataIndividual(AckType ack, uint16_t destination,
     if((lcconfig & LCCONFIG::PHYS_FRAME) == LCCONFIG::PHYS_FRAME_LOCK)
     {
         // IGNORE_TOTALLY
+        //println("NetworkLayerCoupler::routeDataIndividual locked");
         return;
     }
     else if((lcconfig & LCCONFIG::PHYS_FRAME) == LCCONFIG::PHYS_FRAME_UNLOCK)
     {
         // ROUTE_XXX
+        //println("NetworkLayerCoupler::routeDataIndividual unlocked");
         sendMsgHopCount(ack, AddressType::IndividualAddress, destination, npdu, priority, Broadcast, srcIfIndex, source);
         return;
     }
     else // LCCONFIG::PHYS_FRAME_ROUTE or 0
     {
         if(isRoutedIndividualAddress(destination, srcIfIndex))
+        {
+            //println("NetworkLayerCoupler::routeDataIndividual routed");
             sendMsgHopCount(ack, AddressType::IndividualAddress, destination, npdu, priority, Broadcast, srcIfIndex, source); // ROUTE_XXX
+        }
         else
+        {
+            //println("NetworkLayerCoupler::routeDataIndividual not routed");
             ; // IGNORE_TOTALLY
-
-
+        }
     }
 }
 

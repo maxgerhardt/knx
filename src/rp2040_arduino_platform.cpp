@@ -261,7 +261,8 @@ void RP2040ArduinoPlatform::macAddress(uint8_t* addr)
 #if defined(KNX_IP_W5500)
     addr = KNX_NETIF.getNetIf()->hwaddr;
 #elif defined(KNX_IP_WIFI)
-    addr = KNX_NETIF.macAddress(_macaddr);
+    uint8_t macaddr[6] = {0,0,0,0,0,0};
+    addr = KNX_NETIF.macAddress(macaddr);
 #elif defined(KNX_IP_GENERIC)
     KNX_NETIF.MACAddress(addr);
 #endif

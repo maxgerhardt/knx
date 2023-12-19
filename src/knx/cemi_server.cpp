@@ -191,7 +191,7 @@ void CemiServer::frameReceived(CemiFrame& frame)
     }
 }
 
-void CemiServer::handleLDataReq(CemiFrame& frame, bool isRF = false)
+void CemiServer::handleLDataReq(CemiFrame& frame, bool isRF)
 {
                 // Fill in the cEMI client address if the client sets 
             // source address to 0.
@@ -246,7 +246,7 @@ void CemiServer::handleLDataReq(CemiFrame& frame, bool isRF = false)
     _dataLinkLayer->dataRequestFromTunnel(frame);
 }
 
-void CemiServer::handleMPropWriteReq(CemiFrame& frame, bool isRF = false)
+void CemiServer::handleMPropWriteReq(CemiFrame& frame, bool isRF)
 {
 #ifdef KNX_LOG_TUNNELING
     print("M_PropRead_req: ");
@@ -336,7 +336,7 @@ void CemiServer::handleMPropWriteReq(CemiFrame& frame, bool isRF = false)
     }
 }
 
-void CemiServer::handleMPropReadReq(CemiFrame& frame, bool isRF = false)
+void CemiServer::handleMPropReadReq(CemiFrame& frame, bool isRF)
 {
     print("M_PropWrite_req: "); 
 

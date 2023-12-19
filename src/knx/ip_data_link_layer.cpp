@@ -357,7 +357,7 @@ void IpDataLinkLayer::loop()
 #ifdef KNX_TUNNELING
 void IpDataLinkLayer::loopHandleConnectRequest(uint8_t* buffer, uint16_t length)
 {
-    KnxIpConnectRequest connRequest(buffer, len);
+    KnxIpConnectRequest connRequest(buffer, length);
 #ifdef KNX_LOG_TUNNELING
     println("Got Connect Request!");
     switch(connRequest.cri().type())
@@ -505,7 +505,7 @@ void IpDataLinkLayer::loopHandleConnectRequest(uint8_t* buffer, uint16_t length)
 
 void IpDataLinkLayer::loopHandleConnectionStateRequest(uint8_t* buffer, uint16_t length)
 {
-    KnxIpStateRequest stateRequest(buffer, len);
+    KnxIpStateRequest stateRequest(buffer, length);
 
     KnxIpTunnelConnection *tun = nullptr;
     for(int i = 0; i < KNX_TUNNELING; i++)
@@ -540,7 +540,7 @@ void IpDataLinkLayer::loopHandleConnectionStateRequest(uint8_t* buffer, uint16_t
 
 void IpDataLinkLayer::loopHandleDisconnectRequest(uint8_t* buffer, uint16_t length)
 {
-    KnxIpDisconnectRequest discReq(buffer, len);
+    KnxIpDisconnectRequest discReq(buffer, length);
             
 #ifdef KNX_LOG_TUNNELING
     print("Disconnect Channel ID: ");
@@ -576,14 +576,14 @@ void IpDataLinkLayer::loopHandleDisconnectRequest(uint8_t* buffer, uint16_t leng
 
 void IpDataLinkLayer::loopHandleDescriptionRequest(uint8_t* buffer, uint16_t length)
 {
-    KnxIpDescriptionRequest descReq(buffer, len);
+    KnxIpDescriptionRequest descReq(buffer, length);
     KnxIpDescriptionResponse descRes(_ipParameters, _deviceObject);
     _platform.sendBytesUniCast(descReq.hpaiCtrl().ipAddress(), descReq.hpaiCtrl().ipPortNumber(), descRes.data(), descRes.totalLength());
 }
 
 void IpDataLinkLayer::loopHandleDeviceConfigurationRequest(uint8_t* buffer, uint16_t length)
 {
-    KnxIpConfigRequest confReq(buffer, len);
+    KnxIpConfigRequest confReq(buffer, length);
     
     KnxIpTunnelConnection *tun = nullptr;
     for(int i = 0; i < KNX_TUNNELING; i++)
@@ -619,7 +619,7 @@ void IpDataLinkLayer::loopHandleDeviceConfigurationRequest(uint8_t* buffer, uint
 
 void IpDataLinkLayer::loopHandleTunnelingRequest(uint8_t* buffer, uint16_t length)
 {
-    KnxIpTunnelingRequest tunnReq(buffer, len);
+    KnxIpTunnelingRequest tunnReq(buffer, length);
 
     KnxIpTunnelConnection *tun = nullptr;
     for(int i = 0; i < KNX_TUNNELING; i++)

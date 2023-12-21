@@ -37,7 +37,7 @@ class IpDataLinkLayer : public DataLinkLayer
     void loopHandleConnectRequest(uint8_t* buffer, uint16_t length);
     void loopHandleConnectionStateRequest(uint8_t* buffer, uint16_t length);
     void loopHandleDisconnectRequest(uint8_t* buffer, uint16_t length);
-    void loopHandleDescriptionRequest(uint8_t* buffer, uint16_t length);
+    void loopHandleDescriptionRequest(uint8_t* buffer, uint16_t length, uint32_t src_ip, uint16_t src_port);
     void loopHandleDeviceConfigurationRequest(uint8_t* buffer, uint16_t length);
     void loopHandleTunnelingRequest(uint8_t* buffer, uint16_t length);
 #endif

@@ -308,7 +308,7 @@ bool RP2040ArduinoPlatform::sendBytesMultiCast(uint8_t* buffer, uint16_t len)
     return true;
 }
 
-int RP2040ArduinoPlatform::readBytesMultiCast(uint8_t* buffer, uint16_t maxLen)
+int RP2040ArduinoPlatform::readBytesMultiCast(uint8_t* buffer, uint16_t maxLen, uint32_t &src_ip, uint16_t &src_port)
 {
     int len = _udp.parsePacket();
     if (len == 0)
@@ -324,6 +324,8 @@ int RP2040ArduinoPlatform::readBytesMultiCast(uint8_t* buffer, uint16_t maxLen)
     }
 
     _udp.read(buffer, len);
+    src_ip = _udp.remoteIP();
+    src_port = _udp.remotePort();
 #ifdef KNX_LOG_IP
     print("Remote IP: ");
     print(_udp.remoteIP().toString().c_str());

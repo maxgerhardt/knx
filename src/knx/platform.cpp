@@ -96,7 +96,7 @@ bool Platform::sendBytesUniCast(uint32_t addr, uint16_t port, uint8_t* buffer, u
     return false;
 }
 
-int Platform::readBytesMultiCast(uint8_t *buffer, uint16_t maxLen)
+int Platform::readBytesMultiCast(uint8_t *buffer, uint16_t maxLen, uint32_t &src_ip, uint16_t &src_port)
 {
     return 0;
 }

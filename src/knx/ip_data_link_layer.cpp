@@ -249,7 +249,9 @@ void IpDataLinkLayer::loop()
 
 
     uint8_t buffer[512];
-    int len = _platform.readBytesMultiCast(buffer, 512);
+    uint32_t src_ip = 0;
+    uint16_t src_port = 0;
+    int len = _platform.readBytesMultiCast(buffer, 512, src_ip, src_port);
     if (len <= 0)
         return;
 
@@ -315,7 +317,7 @@ void IpDataLinkLayer::loop()
 
         case DescriptionRequest:
         {
-            loopHandleDescriptionRequest(buffer, len);
+            loopHandleDescriptionRequest(buffer, len, src_ip, src_port);
             break;
         }
 
@@ -574,11 +576,24 @@ void IpDataLinkLayer::loopHandleDisconnectRequest(uint8_t* buffer, uint16_t leng
     tun->Reset();
 }
 
-void IpDataLinkLayer::loopHandleDescriptionRequest(uint8_t* buffer, uint16_t length)
+void IpDataLinkLayer::loopHandleDescriptionRequest(uint8_t* buffer, uint16_t length, uint32_t src_ip, uint16_t src_port)
 {
     KnxIpDescriptionRequest descReq(buffer, length);
     KnxIpDescriptionResponse descRes(_ipParameters, _deviceObject);
-    _platform.sendBytesUniCast(descReq.hpaiCtrl().ipAddress(), descReq.hpaiCtrl().ipPortNumber(), descRes.data(), descRes.totalLength());
+    uint32_t remote_ip = descReq.hpaiCtrl().ipAddress();
+    uint16_t remote_port = descReq.hpaiCtrl().ipPortNumber();
+    if(descReq.hpaiCtrl().ipAddress() == 0 || descReq.hpaiCtrl().ipPortNumber() == 0)
+    {
+        remote_ip = src_ip;
+        remote_port = src_port;
+        if(src_ip == 0 || src_port == 0)
+        {
+            println("drop KnxIpDescriptionRequest, unknown sender");
+            return;
+        }
+    }
+
+    _platform.sendBytesUniCast(remote_ip, remote_port, descRes.data(), descRes.totalLength());
 }
 
 void IpDataLinkLayer::loopHandleDeviceConfigurationRequest(uint8_t* buffer, uint16_t length)

@@ -57,6 +57,7 @@ class CemiServer
     BauSystemB& _bau;
 #ifdef USE_USB
     UsbTunnelInterface _usbTunnelInterface;
-#endif};
+#endif
+};
 
 #endif

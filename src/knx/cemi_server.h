@@ -50,6 +50,11 @@ class CemiServer
     uint16_t _clientAddress = 0;
     uint8_t _frameNumber = 0;
 
+    void handleLData(CemiFrame& frame);
+    void handleMPropRead(CemiFrame& frame);
+    void handleMPropWrite(CemiFrame& frame);
+    void handleMReset(CemiFrame& frame);
+
     DataLinkLayer* _dataLinkLayer = nullptr;
 #ifdef KNX_TUNNELING
     DataLinkLayer* _dataLinkLayerPrimary = nullptr;

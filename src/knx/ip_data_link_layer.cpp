@@ -295,12 +295,6 @@ void IpDataLinkLayer::loop()
             // FIXME, implement (not needed atm)
             break;
         }
-        default:
-        {
-            // print("Unhandled service identifier: ");
-            // println(code, HEX);
-        }
-
 #ifdef KNX_TUNNELING
         case ConnectRequest:
         {
@@ -353,10 +347,8 @@ void IpDataLinkLayer::loop()
         }
 #endif
         default:
-#if defined(KNX_LOG_TUNNELING) || defined(KNX_LOG_IP)
             print("Unhandled service identifier: ");
             println(code, HEX);
-#endif
             break;
     }
 }

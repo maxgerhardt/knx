@@ -54,6 +54,15 @@ extern Wiznet5500lwIP KNX_NETIF;
 #elif defined(KNX_IP_WIFI)
 #elif defined(KNX_IP_GENERIC)
 
+
+#endif
+
+#ifndef KNX_UART_RX_PIN
+#define KNX_UART_RX_PIN UART_PIN_NOT_DEFINED
+#endif
+
+#ifndef KNX_UART_TX_PIN
+#define KNX_UART_TX_PIN UART_PIN_NOT_DEFINED
 #endif
 
 RP2040ArduinoPlatform::RP2040ArduinoPlatform()
@@ -61,6 +70,9 @@ RP2040ArduinoPlatform::RP2040ArduinoPlatform()
     : ArduinoPlatform(&KNX_SERIAL)
 #endif
 {
+    #ifndef KNX_NO_DEFAULT_UART
+    knxUartPins(KNX_UART_RX_PIN, KNX_UART_TX_PIN);
+    #endif
     #ifndef USE_RP2040_EEPROM_EMULATION
     _memoryType = Flash;
     #endif
@@ -71,6 +83,18 @@ RP2040ArduinoPlatform::RP2040ArduinoPlatform( HardwareSerial* s) : ArduinoPlatfo
     #ifndef USE_RP2040_EEPROM_EMULATION
     _memoryType = Flash;
     #endif
+}
+
+void RP2040ArduinoPlatform::knxUartPins(pin_size_t rxPin, pin_size_t txPin)
+{
+    SerialUART* serial = dynamic_cast<SerialUART*>(_knxSerial);
+    if(serial)
+    {
+        if (rxPin != UART_PIN_NOT_DEFINED)
+            serial->setRX(rxPin);
+        if (txPin != UART_PIN_NOT_DEFINED)
+            serial->setTX(txPin);
+    }
 }
 
 void RP2040ArduinoPlatform::setupUart()
@@ -245,7 +269,6 @@ void RP2040ArduinoPlatform::writeBufferedEraseBlock()
 #if defined(KNX_NETIF)
 uint32_t RP2040ArduinoPlatform::currentIpAddress()
 {
-
     return KNX_NETIF.localIP();
 }
 uint32_t RP2040ArduinoPlatform::currentSubnetMask()
@@ -281,14 +304,12 @@ void RP2040ArduinoPlatform::setupMultiCast(uint32_t addr, uint16_t port)
     //    _unicast_socket_setup = UDP_UNICAST.begin(3671);
     #endif
 
-#ifdef KNX_LOG_IP
-    print("Setup Mcast addr: ");
-    print(mcastaddr.toString().c_str());
-    print(" on port: ");
-    print(port);
-    print(" result ");
-    println(result);
-#endif
+    // print("Setup Mcast addr: ");
+    // print(mcastaddr.toString().c_str());
+    // print(" on port: ");
+    // print(port);
+    // print(" result ");
+    // println(result);
 }
 
 void RP2040ArduinoPlatform::closeMultiCast()
@@ -298,10 +319,9 @@ void RP2040ArduinoPlatform::closeMultiCast()
 
 bool RP2040ArduinoPlatform::sendBytesMultiCast(uint8_t* buffer, uint16_t len)
 {
-#ifdef KNX_LOG_IP
-    printHex("<- ",buffer, len);
-#endif
-    //ToDo: check if Ethernet is able to receive
+    // printHex("<- ",buffer, len);
+    //ToDo: check if Ethernet is able to receive, return false if not
+
     _udp.beginPacket(mcastaddr, _port);
     _udp.write(buffer, len);
     _udp.endPacket();
@@ -324,12 +344,11 @@ int RP2040ArduinoPlatform::readBytesMultiCast(uint8_t* buffer, uint16_t maxLen)
     }
 
     _udp.read(buffer, len);
-#ifdef KNX_LOG_IP
-    print("Remote IP: ");
-    print(_udp.remoteIP().toString().c_str());
 
-    printHex("-> ", buffer, len);
-#endif
+    // print("Remote IP: ");
+    // print(_udp.remoteIP().toString().c_str());
+    // printHex("-> ", buffer, len);
+
     return len;
 }
 
@@ -338,10 +357,8 @@ bool RP2040ArduinoPlatform::sendBytesUniCast(uint32_t addr, uint16_t port, uint8
 {
     IPAddress ucastaddr(htonl(addr));
     
-#ifdef KNX_LOG_IP
-    print("sendBytesUniCast to:");
-    println(ucastaddr.toString().c_str());
-#endif
+    // print("sendBytesUniCast to:");
+    // println(ucastaddr.toString().c_str());
 
 #ifdef KNX_IP_GENERIC
     if(!_unicast_socket_setup)

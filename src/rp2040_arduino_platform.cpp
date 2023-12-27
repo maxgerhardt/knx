@@ -54,6 +54,7 @@ extern Wiznet5500lwIP KNX_NETIF;
 #elif defined(KNX_IP_WIFI)
 #elif defined(KNX_IP_GENERIC)
 
+
 #endif
 
 #ifndef KNX_UART_RX_PIN
@@ -319,8 +320,8 @@ void RP2040ArduinoPlatform::closeMultiCast()
 bool RP2040ArduinoPlatform::sendBytesMultiCast(uint8_t* buffer, uint16_t len)
 {
     // printHex("<- ",buffer, len);
-
     //ToDo: check if Ethernet is able to receive, return false if not
+
     _udp.beginPacket(mcastaddr, _port);
     _udp.write(buffer, len);
     _udp.endPacket();

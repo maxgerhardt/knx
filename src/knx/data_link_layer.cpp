@@ -33,6 +33,7 @@ void DataLinkLayer::cemiServer(CemiServer& cemiServer)
     _cemiServer = &cemiServer;
 }
 
+#ifdef KNX_TUNNELING
 void DataLinkLayer::dataRequestToTunnel(CemiFrame& frame)
 {
     println("default dataRequestToTunnel");
@@ -47,6 +48,7 @@ void DataLinkLayer::dataIndicationToTunnel(CemiFrame& frame)
 {
     println("default dataIndicationToTunnel");
 }
+#endif
 
 void DataLinkLayer::dataRequestFromTunnel(CemiFrame& frame)
 {

@@ -185,14 +185,15 @@ const uint8_t* RouterObject::restore(const uint8_t* buffer)
 
 void RouterObject::commandClearSetRoutingTable(bool bitIsSet)
 {
+    uint8_t fillbyte = bitIsSet ? 0xFF : 0x00;
+    uint32_t relptr = _memory.toRelative(data());
 #ifdef KNX_LOG_COUPLER
     print("RouterObject::commandClearSetRoutingTable ");
     println(bitIsSet);
-#endif
-    uint8_t fillbyte = bitIsSet ? 0xFF : 0x00;
-    uint32_t relptr = _memory.toRelative(data());
     println(relptr);
     println((uint32_t)data());
+#endif
+
     for (uint16_t i = 0; i < kFilterTableSize; i++)
     {
         _memory.writeMemory(relptr+i, 1, &fillbyte);

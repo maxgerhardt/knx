@@ -13,6 +13,7 @@
 CemiServer::CemiServer(BauSystemB& bau)
     : _bau(bau)
 #ifdef USE_USB
+        ,
         _usbTunnelInterface(*this,
         _bau.deviceObject().maskVersion(),
         _bau.deviceObject().manufacturerId())

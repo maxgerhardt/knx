@@ -25,7 +25,11 @@ KnxIpDescriptionResponse::KnxIpDescriptionResponse(IpParameterObject& parameters
 
     _deviceInfo.length(LEN_DEVICE_INFORMATION_DIB);
     _deviceInfo.code(DEVICE_INFO);
-    _deviceInfo.medium(0x20); //KNX-IP FIXME get this value from somewhere else
+#if MASK_VERSION == 0x57B0
+    _deviceInfo.medium(0x20); //MediumType is IP (for IP-Only Devices)
+#else
+    _deviceInfo.medium(0x02); //MediumType is TP
+#endif
     _deviceInfo.status(deviceObject.progMode());
     _deviceInfo.individualAddress(parameters.propertyValue<uint16_t>(PID_KNX_INDIVIDUAL_ADDRESS));
     _deviceInfo.projectInstallationIdentifier(parameters.propertyValue<uint16_t>(PID_PROJECT_INSTALLATION_ID));

@@ -121,10 +121,6 @@ void CemiServer::dataIndicationToTunnel(CemiFrame& frame)
 
 void CemiServer::frameReceived(CemiFrame& frame)
 {
-#ifdef USE_RF
-    bool isRf = _dataLinkLayer->mediumType() == DptMedium::KNX_RF;
-#endif
-
     switch(frame.messageCode())
     {
         case L_data_req:
@@ -190,7 +186,7 @@ void CemiServer::handleLData(CemiFrame& frame)
 #endif
 
 #ifdef USE_RF
-    if (isRf)
+    if (_dataLinkLayer->mediumType() == DptMedium::KNX_RF)
     {
         // Check if we have additional info for RF
         if (((frame.data())[1] == 0x0A) && // Additional info total length: we only handle one additional info of type RF

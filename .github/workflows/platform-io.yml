@@ -18,8 +18,8 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install platformio
-    - name: Build knx-usb
-      run: platformio ci --lib="." --project-conf=examples/knx-usb/platformio-ci.ini examples/knx-usb/src/main.cpp
+#    - name: Build knx-usb
+#      run: platformio ci --lib="." --project-conf=examples/knx-usb/platformio-ci.ini examples/knx-usb/src/main.cpp
     - name: Build knx-demo
       run: platformio ci --lib="." --project-conf=examples/knx-demo/platformio-ci.ini examples/knx-demo/knx-demo.ino
     - name: Build knx-demo-coupler

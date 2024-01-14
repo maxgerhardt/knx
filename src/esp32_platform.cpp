@@ -15,10 +15,30 @@ Esp32Platform::Esp32Platform()
     : ArduinoPlatform(&KNX_SERIAL)
 #endif
 {
+    #ifdef KNX_UART_RX_PIN
+    _rxPin = KNX_UART_RX_PIN;
+    #endif
+    #ifdef KNX_UART_TX_PIN
+    _txPin = KNX_UART_TX_PIN;
+    #endif
 }
 
 Esp32Platform::Esp32Platform(HardwareSerial* s) : ArduinoPlatform(s)
 {
+}
+
+void Esp32Platform::knxUartPins(int8_t rxPin, int8_t txPin)
+{
+    _rxPin = rxPin;
+    _txPin = txPin;
+}
+
+// ESP specific uart handling with pins
+void Esp32Platform::setupUart()
+{
+    _knxSerial->begin(19200, SERIAL_8E1, _rxPin, _txPin);
+    while (!_knxSerial) 
+        ;
 }
 
 uint32_t Esp32Platform::currentIpAddress()

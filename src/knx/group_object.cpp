@@ -181,6 +181,7 @@ void GroupObject::requestObjectRead()
 void GroupObject::objectWritten()
 {
     _commFlagEx.commFlag = WriteRequest;
+    _commFlagEx.uninitialized = false;
 }
 
 size_t GroupObject::valueSize()

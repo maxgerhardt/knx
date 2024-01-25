@@ -287,3 +287,5 @@ void GroupObject::valueNoSend(const KNXValue& value, const Dpt& type)
 
     KNX_Encode_Value(value, _data, _dataLength, type);
 }
+
+// DUMMY CHANGE

@@ -4,30 +4,23 @@ on: [push, pull_request]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-#    strategy:
-#      matrix:
-#        example: [path/to/test/file.c, examples/file.ino, path/to/test/directory]
-
+    strategy:
+      matrix:
+        example:
+          - "examples/knx-usb"
+		      - "examples/knx-demo"
+		      - "examples/knx-demo-coupler"
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.9"
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install platformio
-    - name: Build knx-usb
-      run: platformio ci --lib="." --project-conf=examples/knx-usb/platformio-ci.ini  examples/knx-usb/src/main.cpp
-    - name: debug
-      run: | 
-        ls -l
-    - name: Build knx-demo
-      run: platformio ci --lib="." --project-conf=examples/knx-demo/platformio-ci.ini examples/knx-demo/knx-demo.ino
-    - name: Build knx-demo-coupler
-      run: platformio ci --lib="." --project-conf=examples/knx-demo-coupler/platformio-ci.ini examples/knx-demo-coupler/knx-demo-coupler.ino
- #   - name: Run PlatformIO
- #     run: pio ci --board=<ID_1> --board=<ID_2> --board=<ID_N>
- #     env:
- #       PLATFORMIO_CI_SRC: ${{ matrix.example }}
+		    pio pkg install -g -l "."
+    - name: Build examples
+      run: pio run -d ${{ matrix.example }}

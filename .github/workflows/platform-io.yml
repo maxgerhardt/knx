@@ -11,6 +11,7 @@ jobs:
           - "examples/knx-usb"
           - "examples/knx-demo"
           - "examples/knx-demo-coupler"
+          - "examples/knx-demo-smal-go"
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
